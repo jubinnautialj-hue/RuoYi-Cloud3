@@ -61,6 +61,14 @@
 	<logger name="com.ruoyi" level="info" />
 	<!-- Spring日志级别控制  -->
 	<logger name="org.springframework" level="warn" />
+	<!-- Nacos 客户端日志级别控制 - 减少配置刷新频繁输出的 INFO 日志 -->
+	<logger name="com.alibaba.nacos" level="warn" />
+	<!-- Sentinel 流量控制日志级别控制 -->
+	<logger name="com.alibaba.csp.sentinel" level="warn" />
+	<!-- Druid 数据库连接池日志级别控制 -->
+	<logger name="com.alibaba.druid" level="warn" />
+	<!-- Seata 分布式事务日志级别控制 -->
+	<logger name="io.seata" level="warn" />
 
 	<root level="info">
 		<appender-ref ref="console" />
