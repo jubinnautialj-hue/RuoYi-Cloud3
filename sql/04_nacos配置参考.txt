@@ -1,0 +1,191 @@
+/*
+ ============================================
+  文件名：04_nacos配置参考.txt
+  描述：Flowable 工作流 Nacos 配置参考
+  说明：以下配置需要在 Nacos 配置中心手动添加
+ ============================================
+*/
+
+============================================
+一、网关配置（已配置，请确认）
+============================================
+
+请确认 Nacos 中 ruoyi-gateway-dev.yml 配置文件已包含以下内容：
+
+1. Routes 配置（路由转发）：
+------------------------------------------------
+spring:
+  cloud:
+    gateway:
+      routes:
+        # 工作流中心
+        - id: ruoyi-flowable
+          uri: lb://ruoyi-flowable
+          predicates:
+          - Path=/flowable/**
+          filters:
+          - StripPrefix=1
+
+2. XSS 排除配置（防止保存流程时被拦截）：
+------------------------------------------------
+xss:
+  enabled: true
+  excludeUrls:
+    - /system/notice
+    # 这个是新加的，不然保存流程的时候会被拦截
+    - /flowable/model/save
+
+============================================
+二、新增配置文件：ruoyi-flowable-dev.yml
+============================================
+
+请在 Nacos 配置中心新建配置文件，配置信息如下：
+
+【配置基本信息】
+------------------------------------------------
+Data ID: ruoyi-flowable-dev.yml
+Group: DEFAULT_GROUP
+配置格式: YAML
+配置内容: 以下完整内容（请根据实际环境修改数据库连接信息）
+
+------------------------------------------------
+【完整配置内容】
+------------------------------------------------
+
+# spring配置
+spring:
+  redis:
+    host: localhost
+    port: 6379
+    password: 
+  datasource:
+    druid:
+      stat-view-servlet:
+        enabled: true
+        loginUsername: ruoyi
+        loginPassword: 123456
+    dynamic:
+      druid:
+        initial-size: 5
+        min-idle: 5
+        maxActive: 20
+        maxWait: 60000
+        connectTimeout: 30000
+        socketTimeout: 60000
+        timeBetweenEvictionRunsMillis: 60000
+        minEvictableIdleTimeMillis: 300000
+        validationQuery: SELECT 1 FROM DUAL
+        testWhileIdle: true
+        testOnBorrow: false
+        testOnReturn: false
+        poolPreparedStatements: true
+        maxPoolPreparedStatementPerConnectionSize: 20
+        filters: stat,slf4j
+        connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      datasource:
+          # 主库数据源
+          master:
+            driver-class-name: com.mysql.cj.jdbc.Driver
+            url: jdbc:mysql://localhost:3306/ry-cloud?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
+            username: root
+            password: password
+          # 从库数据源（可选）
+          # slave:
+          #   username: 
+          #   password: 
+          #   url: 
+          #   driver-class-name: 
+
+# mybatis配置
+mybatis-plus:
+  mapperPackage: com.ruoyi
+  typeAliasesPackage: com.ruoyi.flowable
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    autoMappingBehavior: PARTIAL
+
+# flowable配置
+flowable:
+  # 关闭定时任务
+  async-executor-activate: false
+  # 数据库策略（true表示自动更新表结构）
+  database-schema-update: true
+  # 历史记录级别
+  history-level: full
+  # 字体（解决流程图中文乱码问题）
+  activity-font-name: 宋体
+  label-font-name: 宋体
+  annotation-font-name: 宋体
+
+# 打印sql日志
+logging:
+  level:
+    com.ruoyi.flowable: debug
+
+------------------------------------------------
+【配置说明】
+------------------------------------------------
+
+1. 数据库连接配置（请根据实际环境修改）：
+   - url: 数据库连接地址
+   - username: 数据库用户名
+   - password: 数据库密码
+
+2. Redis 配置：
+   - host: Redis 服务器地址
+   - port: Redis 端口
+   - password: Redis 密码（如果有）
+
+3. Flowable 配置说明：
+   - database-schema-update: true
+     表示启动时自动创建/更新 Flowable 所需的数据库表
+     可选值：false（不创建）、true（自动更新）、create-drop（创建后删除）
+   
+   - history-level: full
+     历史记录级别，full 表示保存完整的历史记录
+     可选值：none、activity、audit、full
+   
+   - activity-font-name / label-font-name / annotation-font-name: 宋体
+     设置流程图中的字体为宋体，解决中文乱码问题
+     如果系统中没有宋体，可以改为其他中文字体
+
+============================================
+三、配置步骤总结
+============================================
+
+1. 登录 Nacos 控制台（默认地址：http://localhost:8848/nacos）
+2. 点击左侧菜单【配置管理】->【配置列表】
+3. 点击右上角【+】按钮添加新配置
+4. 填写配置信息：
+   - Data ID: ruoyi-flowable-dev.yml
+   - Group: DEFAULT_GROUP
+   - 配置格式: YAML
+   - 配置内容: 复制上面的完整配置内容，并修改数据库连接信息
+5. 点击【发布】按钮保存配置
+
+============================================
+四、验证配置
+============================================
+
+配置完成后，启动 ruoyi-flowable 服务：
+1. 检查启动日志，确认无错误
+2. 检查是否成功连接到 Nacos
+3. 检查数据库连接是否正常
+4. 确认 Flowable 自动创建了所需的表
+
+============================================
+五、Flowable 自动创建的表说明
+============================================
+
+当 flowable.database-schema-update 设置为 true 时，
+Flowable 会在启动时自动创建以下表（以 ACT_ 开头）：
+
+- ACT_RE_*: 流程定义相关表（Repository）
+- ACT_RU_*: 运行时相关表（Runtime）
+- ACT_HI_*: 历史相关表（History）
+- ACT_GE_*: 通用数据表（General）
+
+这些表是 Flowable 工作流引擎的核心表，
+无需手动创建，Flowable 会自动管理。
