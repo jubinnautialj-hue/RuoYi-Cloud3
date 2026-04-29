@@ -28,3 +28,16 @@ spring:
 # 允许 Bean 定义覆盖（解决 MyBatis-Plus 和其他组件的 Bean 冲突问题）
 spring.main:
   allow-bean-definition-overriding: true
+
+# Flowable 配置（默认配置，可在 Nacos 配置中心覆盖）
+flowable:
+  # 关闭定时任务
+  async-executor-activate: false
+  # 数据库策略（false表示不自动更新表结构，首次启动建议在 Nacos 配置中改为 true）
+  database-schema-update: false
+  # 历史记录级别
+  history-level: full
+  # 字体（解决流程图中文乱码问题）
+  activity-font-name: 宋体
+  label-font-name: 宋体
+  annotation-font-name: 宋体
