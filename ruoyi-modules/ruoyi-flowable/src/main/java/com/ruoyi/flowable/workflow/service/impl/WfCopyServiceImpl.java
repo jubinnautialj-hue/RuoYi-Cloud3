@@ -21,7 +21,7 @@ import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.repository.Deployment;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
