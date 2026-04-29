@@ -39,7 +39,7 @@ public class FlowableConfig {
         SpringProcessEngineConfiguration configuration = new SpringProcessEngineConfiguration();
         configuration.setDataSource(dataSource);
         configuration.setTransactionManager(transactionManager);
-        configuration.setDatabaseSchemaUpdate("true");
+        configuration.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
         configuration.setActivityFontName("宋体");
         configuration.setLabelFontName("宋体");
         configuration.setAnnotationFontName("宋体");
