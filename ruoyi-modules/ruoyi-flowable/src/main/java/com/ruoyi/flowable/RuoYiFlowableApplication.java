@@ -2,6 +2,8 @@ package com.ruoyi.flowable;
 
 import com.ruoyi.common.security.annotation.EnableCustomConfig;
 import com.ruoyi.common.security.annotation.EnableRyFeignClients;
+import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
+import org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
@@ -11,7 +13,10 @@ import org.springframework.cache.annotation.EnableCaching;
  * @author bdn
  */
 @EnableCustomConfig
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        ProcessEngineAutoConfiguration.class,
+        ProcessEngineServicesAutoConfiguration.class
+})
 @EnableCaching
 @EnableRyFeignClients
 public class RuoYiFlowableApplication {
