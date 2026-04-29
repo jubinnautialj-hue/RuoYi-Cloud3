@@ -560,4 +560,36 @@ public class SysUserServiceImpl implements ISysUserService
         return successMsg.toString();
     }
 
+    /**
+     * 通过角色ID列表查询用户信息
+     *
+     * @param roleIds 角色ID列表
+     * @return 用户列表
+     */
+    @Override
+    public List<SysUser> selectUserListByRoleIds(List<Long> roleIds)
+    {
+        if (StringUtils.isNull(roleIds) || roleIds.isEmpty())
+        {
+            return new ArrayList<>();
+        }
+        return userMapper.selectUserListByRoleIds(roleIds);
+    }
+
+    /**
+     * 通过部门ID列表查询用户信息
+     *
+     * @param deptIds 部门ID列表
+     * @return 用户列表
+     */
+    @Override
+    public List<SysUser> selectUserListByDeptIds(List<Long> deptIds)
+    {
+        if (StringUtils.isNull(deptIds) || deptIds.isEmpty())
+        {
+            return new ArrayList<>();
+        }
+        return userMapper.selectUserListByDeptIds(deptIds);
+    }
+
 }

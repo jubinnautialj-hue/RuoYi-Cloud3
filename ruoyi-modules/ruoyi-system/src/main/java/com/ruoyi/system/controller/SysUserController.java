@@ -167,6 +167,26 @@ public class SysUserController extends BaseController
     }
 
     /**
+     * 通过角色ID列表查询用户信息
+     */
+    @InnerAuth
+    @GetMapping("/listByRoleIds")
+    public R<List<SysUser>> listByRoleIds(@RequestParam("roleIds") List<Long> roleIds)
+    {
+        return R.ok(userService.selectUserListByRoleIds(roleIds));
+    }
+
+    /**
+     * 通过部门ID列表查询用户信息
+     */
+    @InnerAuth
+    @GetMapping("/listByDeptIds")
+    public R<List<SysUser>> listByDeptIds(@RequestParam("deptIds") List<Long> deptIds)
+    {
+        return R.ok(userService.selectUserListByDeptIds(deptIds));
+    }
+
+    /**
      * 获取用户信息
      * 
      * @return 用户信息

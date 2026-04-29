@@ -211,4 +211,20 @@ public interface ISysUserService
      * @return 结果
      */
     public String importUser(List<SysUser> userList, Boolean isUpdateSupport, String operName);
+
+    /**
+     * 通过角色ID列表查询用户信息
+     *
+     * @param roleIds 角色ID列表
+     * @return 用户列表
+     */
+    public List<SysUser> selectUserListByRoleIds(List<Long> roleIds);
+
+    /**
+     * 通过部门ID列表查询用户信息
+     *
+     * @param deptIds 部门ID列表
+     * @return 用户列表
+     */
+    public List<SysUser> selectUserListByDeptIds(List<Long> deptIds);
 }
