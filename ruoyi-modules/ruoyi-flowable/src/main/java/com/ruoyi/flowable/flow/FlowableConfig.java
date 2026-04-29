@@ -49,8 +49,6 @@ public class FlowableConfig {
         configuration.setLabelFontName("宋体");
         configuration.setAnnotationFontName("宋体");
         
-        configuration.setHistoryLevel(org.flowable.engine.impl.history.HistoryLevel.AUDIT);
-        configuration.setJobExecutorActivate(false);
         configuration.setAsyncExecutorActivate(false);
         
         return configuration;
