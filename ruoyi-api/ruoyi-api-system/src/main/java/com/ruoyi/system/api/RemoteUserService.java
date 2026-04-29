@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.ruoyi.common.core.constant.SecurityConstants;
 import com.ruoyi.common.core.constant.ServiceNameConstants;
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.system.api.domain.SysDept;
+import com.ruoyi.system.api.domain.SysRole;
 import com.ruoyi.system.api.domain.SysUser;
 import com.ruoyi.system.api.factory.RemoteUserFallbackFactory;
 import com.ruoyi.system.api.model.LoginUser;
@@ -73,4 +75,34 @@ public interface RemoteUserService
      */
     @GetMapping("/user/listByDeptIds")
     public R<List<SysUser>> listByDeptIds(@RequestParam("deptIds") List<Long> deptIds, @RequestHeader(SecurityConstants.FROM_SOURCE) String source);
+
+    /**
+     * 通过用户ID查询用户信息
+     *
+     * @param userId 用户ID
+     * @param source 请求来源
+     * @return 结果
+     */
+    @GetMapping("/user/info/id/{userId}")
+    public R<SysUser> getUserInfoByUserId(@PathVariable("userId") Long userId, @RequestHeader(SecurityConstants.FROM_SOURCE) String source);
+
+    /**
+     * 通过角色ID查询角色信息
+     *
+     * @param roleId 角色ID
+     * @param source 请求来源
+     * @return 结果
+     */
+    @GetMapping("/user/role/{roleId}")
+    public R<SysRole> getRoleByRoleId(@PathVariable("roleId") Long roleId, @RequestHeader(SecurityConstants.FROM_SOURCE) String source);
+
+    /**
+     * 通过部门ID查询部门信息
+     *
+     * @param deptId 部门ID
+     * @param source 请求来源
+     * @return 结果
+     */
+    @GetMapping("/user/dept/{deptId}")
+    public R<SysDept> getDeptByDeptId(@PathVariable("deptId") Long deptId, @RequestHeader(SecurityConstants.FROM_SOURCE) String source);
 }

@@ -188,6 +188,36 @@ public class SysUserController extends BaseController
     }
 
     /**
+     * 通过用户ID查询用户信息
+     */
+    @InnerAuth
+    @GetMapping("/info/id/{userId}")
+    public R<SysUser> getUserInfoByUserId(@PathVariable("userId") Long userId)
+    {
+        return R.ok(userService.selectUserById(userId));
+    }
+
+    /**
+     * 通过角色ID查询角色信息
+     */
+    @InnerAuth
+    @GetMapping("/role/{roleId}")
+    public R<SysRole> getRoleByRoleId(@PathVariable("roleId") Long roleId)
+    {
+        return R.ok(roleService.selectRoleById(roleId));
+    }
+
+    /**
+     * 通过部门ID查询部门信息
+     */
+    @InnerAuth
+    @GetMapping("/dept/{deptId}")
+    public R<SysDept> getDeptByDeptId(@PathVariable("deptId") Long deptId)
+    {
+        return R.ok(deptService.selectDeptById(deptId));
+    }
+
+    /**
      * 获取用户信息
      * 
      * @return 用户信息
