@@ -8,8 +8,6 @@ import com.ruoyi.flowable.common.enums.ProcessStatus;
 import org.flowable.common.engine.api.delegate.event.FlowableEngineEntityEvent;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.delegate.event.AbstractFlowableEngineEventListener;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * Flowable 全局监听器
@@ -17,11 +15,13 @@ import org.springframework.stereotype.Component;
  * @author konbai
  * @since 2023/3/8 22:45
  */
-@Component
 public class GlobalEventListener extends AbstractFlowableEngineEventListener {
 
-    @Autowired
-    private RuntimeService runtimeService;
+    private final RuntimeService runtimeService;
+
+    public GlobalEventListener(RuntimeService runtimeService) {
+        this.runtimeService = runtimeService;
+    }
 
     /**
      * 流程结束监听器

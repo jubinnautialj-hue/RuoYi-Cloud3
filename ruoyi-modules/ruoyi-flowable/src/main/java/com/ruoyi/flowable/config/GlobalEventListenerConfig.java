@@ -1,10 +1,10 @@
 package com.ruoyi.flowable.config;
 
 import com.ruoyi.flowable.listener.GlobalEventListener;
-import lombok.AllArgsConstructor;
 import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
 import org.flowable.engine.RuntimeService;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextRefreshedEvent;
 
@@ -14,15 +14,22 @@ import org.springframework.context.event.ContextRefreshedEvent;
  * @author ssc
  */
 @Configuration
-@AllArgsConstructor
 public class GlobalEventListenerConfig implements ApplicationListener<ContextRefreshedEvent> {
 
-	private final GlobalEventListener globalEventListener;
-	private final RuntimeService runtimeService;
+	private RuntimeService runtimeService;
+	private GlobalEventListener globalEventListener;
+
+	@Bean
+	public GlobalEventListener globalEventListener(RuntimeService runtimeService) {
+		this.runtimeService = runtimeService;
+		this.globalEventListener = new GlobalEventListener(runtimeService);
+		return this.globalEventListener;
+	}
 
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
-		// 流程正常结束
-		runtimeService.addEventListener(globalEventListener, FlowableEngineEventType.PROCESS_COMPLETED);
+		if (runtimeService != null && globalEventListener != null) {
+			runtimeService.addEventListener(globalEventListener, FlowableEngineEventType.PROCESS_COMPLETED);
+		}
 	}
 }
