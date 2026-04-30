@@ -1,0 +1,771 @@
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Flowable 7.2.0 数据库表初始化脚本
+-- 适用于 MySQL 5.7+
+-- ----------------------------
+
+-- ============================================================
+-- 1. 通用数据表 (ACT_GE_*)
+-- ============================================================
+
+-- ----------------------------
+-- 通用属性表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ge_property`;
+CREATE TABLE `act_ge_property` (
+  `NAME_` varchar(64) NOT NULL,
+  `VALUE_` varchar(300) DEFAULT NULL,
+  `REV_` int DEFAULT NULL,
+  PRIMARY KEY (`NAME_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='通用属性表';
+
+-- ----------------------------
+-- 通用资源表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ge_bytearray`;
+CREATE TABLE `act_ge_bytearray` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `NAME_` varchar(255) DEFAULT NULL,
+  `DEPLOYMENT_ID_` varchar(64) DEFAULT NULL,
+  `BYTES_` longblob,
+  `GENERATED_` tinyint DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_FK_BYTEARR_DEPL` (`DEPLOYMENT_ID_`),
+  CONSTRAINT `ACT_FK_BYTEARR_DEPL` FOREIGN KEY (`DEPLOYMENT_ID_`) REFERENCES `act_re_deployment` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='通用资源表';
+
+-- ============================================================
+-- 2. 流程定义存储表 (ACT_RE_*)
+-- ============================================================
+
+-- ----------------------------
+-- 流程部署表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_re_deployment`;
+CREATE TABLE `act_re_deployment` (
+  `ID_` varchar(64) NOT NULL,
+  `NAME_` varchar(255) DEFAULT NULL,
+  `CATEGORY_` varchar(255) DEFAULT NULL,
+  `KEY_` varchar(255) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  `DEPLOY_TIME_` datetime(3) DEFAULT NULL,
+  `DERIVED_FROM_` varchar(64) DEFAULT NULL,
+  `DERIVED_FROM_ROOT_` varchar(64) DEFAULT NULL,
+  `PARENT_DEPLOYMENT_ID_` varchar(64) DEFAULT NULL,
+  `ENGINE_VERSION_` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='流程部署表';
+
+-- ----------------------------
+-- 流程定义表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_re_procdef`;
+CREATE TABLE `act_re_procdef` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `CATEGORY_` varchar(255) DEFAULT NULL,
+  `NAME_` varchar(255) DEFAULT NULL,
+  `KEY_` varchar(255) NOT NULL,
+  `VERSION_` int NOT NULL,
+  `DEPLOYMENT_ID_` varchar(64) DEFAULT NULL,
+  `RESOURCE_NAME_` varchar(4000) DEFAULT NULL,
+  `DGRM_RESOURCE_NAME_` varchar(4000) DEFAULT NULL,
+  `DESCRIPTION_` varchar(4000) DEFAULT NULL,
+  `HAS_START_FORM_KEY_` tinyint DEFAULT NULL,
+  `HAS_GRAPHICAL_NOTATION_` tinyint DEFAULT NULL,
+  `SUSPENSION_STATE_` int DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  `ENGINE_VERSION_` varchar(255) DEFAULT NULL,
+  `DERIVED_FROM_` varchar(64) DEFAULT NULL,
+  `DERIVED_FROM_ROOT_` varchar(64) DEFAULT NULL,
+  `DERIVED_VERSION_` int DEFAULT '0',
+  PRIMARY KEY (`ID_`),
+  UNIQUE KEY `ACT_UNIQ_PROCDEF` (`KEY_`,`VERSION_`,`TENANT_ID_`,`DERIVED_VERSION_`),
+  KEY `ACT_IDX_PROCDEF_DEP` (`DEPLOYMENT_ID_`),
+  CONSTRAINT `ACT_FK_PROCDEF_DEP` FOREIGN KEY (`DEPLOYMENT_ID_`) REFERENCES `act_re_deployment` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='流程定义表';
+
+-- ----------------------------
+-- 流程模型表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_re_model`;
+CREATE TABLE `act_re_model` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `NAME_` varchar(255) DEFAULT NULL,
+  `KEY_` varchar(255) DEFAULT NULL,
+  `CATEGORY_` varchar(255) DEFAULT NULL,
+  `CREATE_TIME_` datetime(3) DEFAULT NULL,
+  `LAST_UPDATE_TIME_` datetime(3) DEFAULT NULL,
+  `VERSION_` int DEFAULT NULL,
+  `META_INFO_` varchar(4000) DEFAULT NULL,
+  `DEPLOYMENT_ID_` varchar(64) DEFAULT NULL,
+  `EDITOR_SOURCE_VALUE_ID_` varchar(64) DEFAULT NULL,
+  `EDITOR_SOURCE_EXTRA_VALUE_ID_` varchar(64) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_FK_MODEL_SOURCE` (`EDITOR_SOURCE_VALUE_ID_`),
+  KEY `ACT_FK_MODEL_SOURCE_EXTRA` (`EDITOR_SOURCE_EXTRA_VALUE_ID_`),
+  KEY `ACT_FK_MODEL_DEPLOYMENT` (`DEPLOYMENT_ID_`),
+  CONSTRAINT `ACT_FK_MODEL_DEPLOYMENT` FOREIGN KEY (`DEPLOYMENT_ID_`) REFERENCES `act_re_deployment` (`ID_`),
+  CONSTRAINT `ACT_FK_MODEL_SOURCE` FOREIGN KEY (`EDITOR_SOURCE_VALUE_ID_`) REFERENCES `act_ge_bytearray` (`ID_`),
+  CONSTRAINT `ACT_FK_MODEL_SOURCE_EXTRA` FOREIGN KEY (`EDITOR_SOURCE_EXTRA_VALUE_ID_`) REFERENCES `act_ge_bytearray` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='流程模型表';
+
+-- ============================================================
+-- 3. 运行时流程表 (ACT_RU_*)
+-- ============================================================
+
+-- ----------------------------
+-- 运行时流程实例表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ru_execution`;
+CREATE TABLE `act_ru_execution` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `BUSINESS_KEY_` varchar(255) DEFAULT NULL,
+  `PARENT_ID_` varchar(64) DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) DEFAULT NULL,
+  `SUPER_EXEC_` varchar(64) DEFAULT NULL,
+  `ROOT_PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `ACT_ID_` varchar(255) DEFAULT NULL,
+  `IS_ACTIVE_` tinyint DEFAULT NULL,
+  `IS_CONCURRENT_` tinyint DEFAULT NULL,
+  `IS_SCOPE_` tinyint DEFAULT NULL,
+  `IS_EVENT_SCOPE_` tinyint DEFAULT NULL,
+  `IS_MI_ROOT_` tinyint DEFAULT NULL,
+  `SUSPENSION_STATE_` int DEFAULT NULL,
+  `CACHED_ENT_STATE_` int DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  `NAME_` varchar(255) DEFAULT NULL,
+  `START_TIME_` datetime(3) DEFAULT NULL,
+  `START_USER_ID_` varchar(255) DEFAULT NULL,
+  `LOCK_TIME_` datetime(3) DEFAULT NULL,
+  `LOCK_OWNER_` varchar(255) DEFAULT NULL,
+  `IS_COUNT_ENABLED_` tinyint DEFAULT NULL,
+  `EVT_SUBSCR_COUNT_` int DEFAULT NULL,
+  `TASK_COUNT_` int DEFAULT NULL,
+  `JOB_COUNT_` int DEFAULT NULL,
+  `TIMER_JOB_COUNT_` int DEFAULT NULL,
+  `SUSP_JOB_COUNT_` int DEFAULT NULL,
+  `DEADLETTER_JOB_COUNT_` int DEFAULT NULL,
+  `VAR_COUNT_` int DEFAULT NULL,
+  `ID_LINK_COUNT_` int DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_EXEC_BUSKEY` (`BUSINESS_KEY_`),
+  KEY `ACT_IDX_EXEC_ROOT` (`ROOT_PROC_INST_ID_`),
+  KEY `ACT_FK_EXE_PROCINST` (`PROC_INST_ID_`),
+  KEY `ACT_FK_EXE_PARENT` (`PARENT_ID_`),
+  KEY `ACT_FK_EXE_SUPER` (`SUPER_EXEC_`),
+  KEY `ACT_FK_EXE_PROCDEF` (`PROC_DEF_ID_`),
+  KEY `ACT_IDX_EXEC_LOCK_OWNER` (`LOCK_OWNER_`),
+  CONSTRAINT `ACT_FK_EXE_PARENT` FOREIGN KEY (`PARENT_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_EXE_PROCDEF` FOREIGN KEY (`PROC_DEF_ID_`) REFERENCES `act_re_procdef` (`ID_`),
+  CONSTRAINT `ACT_FK_EXE_PROCINST` FOREIGN KEY (`PROC_INST_ID_`) REFERENCES `act_ru_execution` (`ID_`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `ACT_FK_EXE_SUPER` FOREIGN KEY (`SUPER_EXEC_`) REFERENCES `act_ru_execution` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='运行时流程实例表';
+
+-- ----------------------------
+-- 运行时任务表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ru_task`;
+CREATE TABLE `act_ru_task` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) DEFAULT NULL,
+  `TASK_DEF_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `SCOPE_DEFINITION_ID_` varchar(255) DEFAULT NULL,
+  `NAME_` varchar(255) DEFAULT NULL,
+  `PARENT_TASK_ID_` varchar(64) DEFAULT NULL,
+  `DESCRIPTION_` varchar(4000) DEFAULT NULL,
+  `TASK_DEF_KEY_` varchar(255) DEFAULT NULL,
+  `OWNER_` varchar(255) DEFAULT NULL,
+  `ASSIGNEE_` varchar(255) DEFAULT NULL,
+  `DELEGATION_` varchar(64) DEFAULT NULL,
+  `PRIORITY_` int DEFAULT NULL,
+  `CREATE_TIME_` datetime(3) DEFAULT NULL,
+  `DUE_DATE_` datetime(3) DEFAULT NULL,
+  `CATEGORY_` varchar(255) DEFAULT NULL,
+  `SUSPENSION_STATE_` int DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  `FORM_KEY_` varchar(255) DEFAULT NULL,
+  `CLAIM_TIME_` datetime(3) DEFAULT NULL,
+  `IS_COUNT_ENABLED_` tinyint DEFAULT NULL,
+  `VAR_COUNT_` int DEFAULT NULL,
+  `ID_LINK_COUNT_` int DEFAULT NULL,
+  `SUB_TASK_COUNT_` int DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_TASK_CREATE` (`CREATE_TIME_`),
+  KEY `ACT_IDX_TASK_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_TASK_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_TASK_SCOPE_DEF` (`SCOPE_DEFINITION_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_FK_TASK_EXE` (`EXECUTION_ID_`),
+  KEY `ACT_FK_TASK_PROCINST` (`PROC_INST_ID_`),
+  KEY `ACT_FK_TASK_PROCDEF` (`PROC_DEF_ID_`),
+  KEY `ACT_IDX_TASK_ASSIGNEE` (`ASSIGNEE_`),
+  KEY `ACT_IDX_TASK_OWNER` (`OWNER_`),
+  CONSTRAINT `ACT_FK_TASK_EXE` FOREIGN KEY (`EXECUTION_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_TASK_PROCDEF` FOREIGN KEY (`PROC_DEF_ID_`) REFERENCES `act_re_procdef` (`ID_`),
+  CONSTRAINT `ACT_FK_TASK_PROCINST` FOREIGN KEY (`PROC_INST_ID_`) REFERENCES `act_ru_execution` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='运行时任务表';
+
+-- ----------------------------
+-- 运行时变量表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ru_variable`;
+CREATE TABLE `act_ru_variable` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `TYPE_` varchar(255) NOT NULL,
+  `NAME_` varchar(255) NOT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `TASK_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `BYTEARRAY_ID_` varchar(64) DEFAULT NULL,
+  `DOUBLE_` double DEFAULT NULL,
+  `LONG_` bigint DEFAULT NULL,
+  `TEXT_` varchar(4000) DEFAULT NULL,
+  `TEXT2_` varchar(4000) DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_VARIABLE_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_VARIABLE_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_FK_VAR_EXE` (`EXECUTION_ID_`),
+  KEY `ACT_FK_VAR_PROCINST` (`PROC_INST_ID_`),
+  KEY `ACT_FK_VAR_BYTEARRAY` (`BYTEARRAY_ID_`),
+  KEY `ACT_IDX_VARIABLE_TASK_ID` (`TASK_ID_`),
+  CONSTRAINT `ACT_FK_VAR_BYTEARRAY` FOREIGN KEY (`BYTEARRAY_ID_`) REFERENCES `act_ge_bytearray` (`ID_`),
+  CONSTRAINT `ACT_FK_VAR_EXE` FOREIGN KEY (`EXECUTION_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_VAR_PROCINST` FOREIGN KEY (`PROC_INST_ID_`) REFERENCES `act_ru_execution` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='运行时变量表';
+
+-- ----------------------------
+-- 运行时事件订阅表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ru_event_subscr`;
+CREATE TABLE `act_ru_event_subscr` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `EVENT_TYPE_` varchar(255) NOT NULL,
+  `EVENT_NAME_` varchar(255) DEFAULT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `ACTIVITY_ID_` varchar(255) DEFAULT NULL,
+  `CONFIGURATION_` varchar(255) DEFAULT NULL,
+  `CREATED_` datetime(3) NOT NULL,
+  `PROC_DEF_ID_` varchar(64) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `SCOPE_DEFINITION_ID_` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_EVENT_SUBSCR_CONFIG_` (`CONFIGURATION_`),
+  KEY `ACT_IDX_EVENT_SUBSCR_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_EVENT_SUBSCR_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_EVENT_SUBSCR_SCOPE_DEF` (`SCOPE_DEFINITION_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_FK_EVENT_EXEC` (`EXECUTION_ID_`),
+  KEY `ACT_FK_EVENT_PROCINST` (`PROC_INST_ID_`),
+  KEY `ACT_FK_EVENT_PROCDEF` (`PROC_DEF_ID_`),
+  CONSTRAINT `ACT_FK_EVENT_EXEC` FOREIGN KEY (`EXECUTION_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_EVENT_PROCDEF` FOREIGN KEY (`PROC_DEF_ID_`) REFERENCES `act_re_procdef` (`ID_`),
+  CONSTRAINT `ACT_FK_EVENT_PROCINST` FOREIGN KEY (`PROC_INST_ID_`) REFERENCES `act_ru_execution` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='运行时事件订阅表';
+
+-- ----------------------------
+-- 运行时作业表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ru_job`;
+CREATE TABLE `act_ru_job` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `TYPE_` varchar(255) NOT NULL,
+  `LOCK_EXP_TIME_` datetime(3) DEFAULT NULL,
+  `LOCK_OWNER_` varchar(255) DEFAULT NULL,
+  `EXCLUSIVE_` tinyint DEFAULT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `PROCESS_INSTANCE_ID_` varchar(64) DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `ELEMENT_ID_` varchar(255) DEFAULT NULL,
+  `ELEMENT_NAME_` varchar(255) DEFAULT NULL,
+  `SCOPE_DEFINITION_ID_` varchar(255) DEFAULT NULL,
+  `RETRIES_` int DEFAULT NULL,
+  `EXCEPTION_STACK_ID_` varchar(64) DEFAULT NULL,
+  `EXCEPTION_MSG_` varchar(4000) DEFAULT NULL,
+  `DUEDATE_` datetime(3) DEFAULT NULL,
+  `REPEAT_` varchar(255) DEFAULT NULL,
+  `HANDLER_TYPE_` varchar(255) DEFAULT NULL,
+  `HANDLER_CFG_` varchar(4000) DEFAULT NULL,
+  `CUSTOM_VALUES_ID_` varchar(64) DEFAULT NULL,
+  `CREATE_TIME_` datetime(3) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_JOB_EXCEPTION_STACK_ID` (`EXCEPTION_STACK_ID_`),
+  KEY `ACT_IDX_JOB_CUSTOM_VALUES_ID` (`CUSTOM_VALUES_ID_`),
+  KEY `ACT_IDX_JOB_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_JOB_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_JOB_SCOPE_DEF` (`SCOPE_DEFINITION_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_FK_JOB_EXECUTION` (`EXECUTION_ID_`),
+  KEY `ACT_FK_JOB_PROCESS_INSTANCE` (`PROCESS_INSTANCE_ID_`),
+  KEY `ACT_FK_JOB_PROC_DEF` (`PROC_DEF_ID_`),
+  KEY `ACT_IDX_JOB_LOCK_OWNER` (`LOCK_OWNER_`),
+  CONSTRAINT `ACT_FK_JOB_EXCEPTION` FOREIGN KEY (`EXCEPTION_STACK_ID_`) REFERENCES `act_ge_bytearray` (`ID_`),
+  CONSTRAINT `ACT_FK_JOB_EXECUTION` FOREIGN KEY (`EXECUTION_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_JOB_PROCESS_INSTANCE` FOREIGN KEY (`PROCESS_INSTANCE_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_JOB_PROC_DEF` FOREIGN KEY (`PROC_DEF_ID_`) REFERENCES `act_re_procdef` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='运行时作业表';
+
+-- ----------------------------
+-- 运行时定时作业表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ru_timer_job`;
+CREATE TABLE `act_ru_timer_job` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `TYPE_` varchar(255) NOT NULL,
+  `LOCK_EXP_TIME_` datetime(3) DEFAULT NULL,
+  `LOCK_OWNER_` varchar(255) DEFAULT NULL,
+  `EXCLUSIVE_` tinyint DEFAULT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `PROCESS_INSTANCE_ID_` varchar(64) DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `ELEMENT_ID_` varchar(255) DEFAULT NULL,
+  `ELEMENT_NAME_` varchar(255) DEFAULT NULL,
+  `SCOPE_DEFINITION_ID_` varchar(255) DEFAULT NULL,
+  `RETRIES_` int DEFAULT NULL,
+  `EXCEPTION_STACK_ID_` varchar(64) DEFAULT NULL,
+  `EXCEPTION_MSG_` varchar(4000) DEFAULT NULL,
+  `DUEDATE_` datetime(3) DEFAULT NULL,
+  `REPEAT_` varchar(255) DEFAULT NULL,
+  `HANDLER_TYPE_` varchar(255) DEFAULT NULL,
+  `HANDLER_CFG_` varchar(4000) DEFAULT NULL,
+  `CUSTOM_VALUES_ID_` varchar(64) DEFAULT NULL,
+  `CREATE_TIME_` datetime(3) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_TIMER_JOB_EXCEPTION_STACK_ID` (`EXCEPTION_STACK_ID_`),
+  KEY `ACT_IDX_TIMER_JOB_CUSTOM_VALUES_ID` (`CUSTOM_VALUES_ID_`),
+  KEY `ACT_IDX_TIMER_JOB_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_TIMER_JOB_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_TIMER_JOB_SCOPE_DEF` (`SCOPE_DEFINITION_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_FK_TIMER_JOB_EXECUTION` (`EXECUTION_ID_`),
+  KEY `ACT_FK_TIMER_JOB_PROCESS_INSTANCE` (`PROCESS_INSTANCE_ID_`),
+  KEY `ACT_FK_TIMER_JOB_PROC_DEF` (`PROC_DEF_ID_`),
+  CONSTRAINT `ACT_FK_TIMER_JOB_EXCEPTION` FOREIGN KEY (`EXCEPTION_STACK_ID_`) REFERENCES `act_ge_bytearray` (`ID_`),
+  CONSTRAINT `ACT_FK_TIMER_JOB_EXECUTION` FOREIGN KEY (`EXECUTION_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_TIMER_JOB_PROCESS_INSTANCE` FOREIGN KEY (`PROCESS_INSTANCE_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_TIMER_JOB_PROC_DEF` FOREIGN KEY (`PROC_DEF_ID_`) REFERENCES `act_re_procdef` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='运行时定时作业表';
+
+-- ----------------------------
+-- 运行时挂起作业表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ru_suspended_job`;
+CREATE TABLE `act_ru_suspended_job` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `TYPE_` varchar(255) NOT NULL,
+  `LOCK_EXP_TIME_` datetime(3) DEFAULT NULL,
+  `LOCK_OWNER_` varchar(255) DEFAULT NULL,
+  `EXCLUSIVE_` tinyint DEFAULT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `PROCESS_INSTANCE_ID_` varchar(64) DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `ELEMENT_ID_` varchar(255) DEFAULT NULL,
+  `ELEMENT_NAME_` varchar(255) DEFAULT NULL,
+  `SCOPE_DEFINITION_ID_` varchar(255) DEFAULT NULL,
+  `RETRIES_` int DEFAULT NULL,
+  `EXCEPTION_STACK_ID_` varchar(64) DEFAULT NULL,
+  `EXCEPTION_MSG_` varchar(4000) DEFAULT NULL,
+  `DUEDATE_` datetime(3) DEFAULT NULL,
+  `REPEAT_` varchar(255) DEFAULT NULL,
+  `HANDLER_TYPE_` varchar(255) DEFAULT NULL,
+  `HANDLER_CFG_` varchar(4000) DEFAULT NULL,
+  `CUSTOM_VALUES_ID_` varchar(64) DEFAULT NULL,
+  `CREATE_TIME_` datetime(3) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_SUSPENDED_JOB_EXCEPTION_STACK_ID` (`EXCEPTION_STACK_ID_`),
+  KEY `ACT_IDX_SUSPENDED_JOB_CUSTOM_VALUES_ID` (`CUSTOM_VALUES_ID_`),
+  KEY `ACT_IDX_SUSPENDED_JOB_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_SUSPENDED_JOB_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_SUSPENDED_JOB_SCOPE_DEF` (`SCOPE_DEFINITION_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_FK_SUSPENDED_JOB_EXECUTION` (`EXECUTION_ID_`),
+  KEY `ACT_FK_SUSPENDED_JOB_PROCESS_INSTANCE` (`PROCESS_INSTANCE_ID_`),
+  KEY `ACT_FK_SUSPENDED_JOB_PROC_DEF` (`PROC_DEF_ID_`),
+  CONSTRAINT `ACT_FK_SUSPENDED_JOB_EXCEPTION` FOREIGN KEY (`EXCEPTION_STACK_ID_`) REFERENCES `act_ge_bytearray` (`ID_`),
+  CONSTRAINT `ACT_FK_SUSPENDED_JOB_EXECUTION` FOREIGN KEY (`EXECUTION_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_SUSPENDED_JOB_PROCESS_INSTANCE` FOREIGN KEY (`PROCESS_INSTANCE_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_SUSPENDED_JOB_PROC_DEF` FOREIGN KEY (`PROC_DEF_ID_`) REFERENCES `act_re_procdef` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='运行时挂起作业表';
+
+-- ----------------------------
+-- 运行时死信作业表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ru_deadletter_job`;
+CREATE TABLE `act_ru_deadletter_job` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `TYPE_` varchar(255) NOT NULL,
+  `LOCK_EXP_TIME_` datetime(3) DEFAULT NULL,
+  `LOCK_OWNER_` varchar(255) DEFAULT NULL,
+  `EXCLUSIVE_` tinyint DEFAULT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `PROCESS_INSTANCE_ID_` varchar(64) DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `ELEMENT_ID_` varchar(255) DEFAULT NULL,
+  `ELEMENT_NAME_` varchar(255) DEFAULT NULL,
+  `SCOPE_DEFINITION_ID_` varchar(255) DEFAULT NULL,
+  `RETRIES_` int DEFAULT NULL,
+  `EXCEPTION_STACK_ID_` varchar(64) DEFAULT NULL,
+  `EXCEPTION_MSG_` varchar(4000) DEFAULT NULL,
+  `DUEDATE_` datetime(3) DEFAULT NULL,
+  `REPEAT_` varchar(255) DEFAULT NULL,
+  `HANDLER_TYPE_` varchar(255) DEFAULT NULL,
+  `HANDLER_CFG_` varchar(4000) DEFAULT NULL,
+  `CUSTOM_VALUES_ID_` varchar(64) DEFAULT NULL,
+  `CREATE_TIME_` datetime(3) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_DEADLETTER_JOB_EXCEPTION_STACK_ID` (`EXCEPTION_STACK_ID_`),
+  KEY `ACT_IDX_DEADLETTER_JOB_CUSTOM_VALUES_ID` (`CUSTOM_VALUES_ID_`),
+  KEY `ACT_IDX_DEADLETTER_JOB_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_DEADLETTER_JOB_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_DEADLETTER_JOB_SCOPE_DEF` (`SCOPE_DEFINITION_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_FK_DEADLETTER_JOB_EXECUTION` (`EXECUTION_ID_`),
+  KEY `ACT_FK_DEADLETTER_JOB_PROCESS_INSTANCE` (`PROCESS_INSTANCE_ID_`),
+  KEY `ACT_FK_DEADLETTER_JOB_PROC_DEF` (`PROC_DEF_ID_`),
+  CONSTRAINT `ACT_FK_DEADLETTER_JOB_EXCEPTION` FOREIGN KEY (`EXCEPTION_STACK_ID_`) REFERENCES `act_ge_bytearray` (`ID_`),
+  CONSTRAINT `ACT_FK_DEADLETTER_JOB_EXECUTION` FOREIGN KEY (`EXECUTION_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_DEADLETTER_JOB_PROCESS_INSTANCE` FOREIGN KEY (`PROCESS_INSTANCE_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_DEADLETTER_JOB_PROC_DEF` FOREIGN KEY (`PROC_DEF_ID_`) REFERENCES `act_re_procdef` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='运行时死信作业表';
+
+-- ----------------------------
+-- 运行时身份链接表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_ru_identitylink`;
+CREATE TABLE `act_ru_identitylink` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `GROUP_ID_` varchar(255) DEFAULT NULL,
+  `TYPE_` varchar(255) DEFAULT NULL,
+  `USER_ID_` varchar(255) DEFAULT NULL,
+  `TASK_ID_` varchar(64) DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `SCOPE_DEFINITION_ID_` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_ATHRZ_PROCEDEF` (`PROC_DEF_ID_`),
+  KEY `ACT_IDX_IDL_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_IDL_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_IDL_SCOPE_DEF` (`SCOPE_DEFINITION_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_FK_TSKASS_TASK` (`TASK_ID_`),
+  KEY `ACT_FK_ATHRZ_PROCEDEF` (`PROC_DEF_ID_`),
+  KEY `ACT_FK_IDL_PROCINST` (`PROC_INST_ID_`),
+  KEY `ACT_IDX_IDENT_LNK_USER` (`USER_ID_`),
+  KEY `ACT_IDX_IDENT_LNK_GROUP` (`GROUP_ID_`),
+  CONSTRAINT `ACT_FK_ATHRZ_PROCEDEF` FOREIGN KEY (`PROC_DEF_ID_`) REFERENCES `act_re_procdef` (`ID_`),
+  CONSTRAINT `ACT_FK_IDL_PROCINST` FOREIGN KEY (`PROC_INST_ID_`) REFERENCES `act_ru_execution` (`ID_`),
+  CONSTRAINT `ACT_FK_TSKASS_TASK` FOREIGN KEY (`TASK_ID_`) REFERENCES `act_ru_task` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='运行时身份链接表';
+
+-- ============================================================
+-- 4. 历史流程表 (ACT_HI_*)
+-- ============================================================
+
+-- ----------------------------
+-- 历史流程实例表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_hi_procinst`;
+CREATE TABLE `act_hi_procinst` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) NOT NULL,
+  `BUSINESS_KEY_` varchar(255) DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) NOT NULL,
+  `START_TIME_` datetime(3) NOT NULL,
+  `END_TIME_` datetime(3) DEFAULT NULL,
+  `DURATION_` bigint DEFAULT NULL,
+  `START_USER_ID_` varchar(255) DEFAULT NULL,
+  `START_ACT_ID_` varchar(255) DEFAULT NULL,
+  `END_ACT_ID_` varchar(255) DEFAULT NULL,
+  `SUPER_PROCESS_INSTANCE_ID_` varchar(64) DEFAULT NULL,
+  `DELETE_REASON_` varchar(4000) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  `NAME_` varchar(255) DEFAULT NULL,
+  `CALLBACK_ID_` varchar(255) DEFAULT NULL,
+  `CALLBACK_TYPE_` varchar(255) DEFAULT NULL,
+  `REFERENCE_ID_` varchar(255) DEFAULT NULL,
+  `REFERENCE_TYPE_` varchar(255) DEFAULT NULL,
+  `PROPAGATED_STAGE_INST_ID_` varchar(255) DEFAULT NULL,
+  `BUSINESS_STATUS_` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  UNIQUE KEY `ACT_UNIQ_HI_PROC_INST` (`PROC_INST_ID_`),
+  KEY `ACT_IDX_HI_PRO_INST_END` (`END_TIME_`),
+  KEY `ACT_IDX_HI_PRO_I_BUSKEY` (`BUSINESS_KEY_`),
+  KEY `ACT_IDX_HI_PRO_SUPER_PROCINST` (`SUPER_PROCESS_INSTANCE_ID_`),
+  KEY `ACT_IDX_HI_PRO_INST_PROC_DEF` (`PROC_DEF_ID_`),
+  KEY `ACT_IDX_HI_PRO_INST_PROPAGATED` (`PROPAGATED_STAGE_INST_ID_`),
+  KEY `ACT_IDX_HI_PRO_BUSINESS_STATUS` (`BUSINESS_STATUS_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='历史流程实例表';
+
+-- ----------------------------
+-- 历史活动实例表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_hi_actinst`;
+CREATE TABLE `act_hi_actinst` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) NOT NULL,
+  `PROC_INST_ID_` varchar(64) NOT NULL,
+  `EXECUTION_ID_` varchar(64) NOT NULL,
+  `ACT_ID_` varchar(255) NOT NULL,
+  `TASK_ID_` varchar(64) DEFAULT NULL,
+  `CALL_PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `ACT_NAME_` varchar(255) DEFAULT NULL,
+  `ACT_TYPE_` varchar(255) NOT NULL,
+  `ASSIGNEE_` varchar(255) DEFAULT NULL,
+  `START_TIME_` datetime(3) NOT NULL,
+  `END_TIME_` datetime(3) DEFAULT NULL,
+  `DURATION_` bigint DEFAULT NULL,
+  `DELETE_REASON_` varchar(4000) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_HI_ACT_INST_START` (`START_TIME_`),
+  KEY `ACT_IDX_HI_ACT_INST_END` (`END_TIME_`),
+  KEY `ACT_IDX_HI_ACT_INST_PROCINST` (`PROC_INST_ID_`,`ACT_ID_`),
+  KEY `ACT_IDX_HI_ACT_INST_EXEC` (`EXECUTION_ID_`,`ACT_ID_`),
+  KEY `ACT_IDX_HI_ACT_INST_PROC_DEF` (`PROC_DEF_ID_`),
+  KEY `ACT_IDX_HI_ACT_INST_TASK` (`TASK_ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='历史活动实例表';
+
+-- ----------------------------
+-- 历史任务实例表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_hi_taskinst`;
+CREATE TABLE `act_hi_taskinst` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `PROC_DEF_ID_` varchar(64) DEFAULT NULL,
+  `TASK_DEF_ID_` varchar(64) DEFAULT NULL,
+  `TASK_DEF_KEY_` varchar(255) DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `SCOPE_DEFINITION_ID_` varchar(255) DEFAULT NULL,
+  `NAME_` varchar(255) DEFAULT NULL,
+  `PARENT_TASK_ID_` varchar(64) DEFAULT NULL,
+  `DESCRIPTION_` varchar(4000) DEFAULT NULL,
+  `OWNER_` varchar(255) DEFAULT NULL,
+  `ASSIGNEE_` varchar(255) DEFAULT NULL,
+  `DELEGATION_` varchar(64) DEFAULT NULL,
+  `PRIORITY_` int DEFAULT NULL,
+  `CREATE_TIME_` datetime(3) NOT NULL,
+  `CLAIM_TIME_` datetime(3) DEFAULT NULL,
+  `END_TIME_` datetime(3) DEFAULT NULL,
+  `DURATION_` bigint DEFAULT NULL,
+  `DELETE_REASON_` varchar(4000) DEFAULT NULL,
+  `FORM_KEY_` varchar(255) DEFAULT NULL,
+  `CATEGORY_` varchar(255) DEFAULT NULL,
+  `TENANT_ID_` varchar(255) DEFAULT '',
+  `LAST_UPDATED_TIME_` datetime(3) DEFAULT NULL,
+  `QUERY_COUNT_` int DEFAULT '0',
+  `AD_HOC_` tinyint DEFAULT NULL,
+  `AD_HOC_ORDER_` int DEFAULT NULL,
+  `AD_HOC_REMOVED_` tinyint DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_HI_TASK_INST_TASK_ID` (`TASK_DEF_ID_`),
+  KEY `ACT_IDX_HI_TASK_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_HI_TASK_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_HI_TASK_SCOPE_DEF` (`SCOPE_DEFINITION_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_HI_TASK_INST_PROCINST` (`PROC_INST_ID_`),
+  KEY `ACT_IDX_HI_TASK_INST_PROC_DEF` (`PROC_DEF_ID_`),
+  KEY `ACT_IDX_HI_TASK_INST_START` (`START_TIME_`),
+  KEY `ACT_IDX_HI_TASK_INST_END` (`END_TIME_`),
+  KEY `ACT_IDX_HI_TASK_RUPDATED` (`LAST_UPDATED_TIME_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='历史任务实例表';
+
+-- ----------------------------
+-- 历史变量实例表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_hi_varinst`;
+CREATE TABLE `act_hi_varinst` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `TASK_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `NAME_` varchar(255) NOT NULL,
+  `VAR_TYPE_` varchar(100) DEFAULT NULL,
+  `BYTEARRAY_ID_` varchar(64) DEFAULT NULL,
+  `DOUBLE_` double DEFAULT NULL,
+  `LONG_` bigint DEFAULT NULL,
+  `TEXT_` varchar(4000) DEFAULT NULL,
+  `TEXT2_` varchar(4000) DEFAULT NULL,
+  `CREATE_TIME_` datetime(3) DEFAULT NULL,
+  `LAST_UPDATED_TIME_` datetime(3) DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_HI_PROCVAR_PROC_INST` (`PROC_INST_ID_`),
+  KEY `ACT_IDX_HI_PROCVAR_NAME_TYPE` (`NAME_`,`VAR_TYPE_`),
+  KEY `ACT_IDX_HI_VAR_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_HI_VAR_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_HI_VAR_BYTEARRAY` (`BYTEARRAY_ID_`),
+  KEY `ACT_IDX_HI_VAR_TASK` (`TASK_ID_`),
+  CONSTRAINT `ACT_FK_VAR_BYTEARRAY_HI` FOREIGN KEY (`BYTEARRAY_ID_`) REFERENCES `act_ge_bytearray` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='历史变量实例表';
+
+-- ----------------------------
+-- 历史详情表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_hi_detail`;
+CREATE TABLE `act_hi_detail` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `TYPE_` varchar(255) NOT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `EXECUTION_ID_` varchar(64) DEFAULT NULL,
+  `TASK_ID_` varchar(64) DEFAULT NULL,
+  `ACT_INST_ID_` varchar(64) DEFAULT NULL,
+  `NAME_` varchar(255) DEFAULT NULL,
+  `VAR_TYPE_` varchar(255) DEFAULT NULL,
+  `REV_` int DEFAULT NULL,
+  `TIME_` datetime(3) NOT NULL,
+  `BYTEARRAY_ID_` varchar(64) DEFAULT NULL,
+  `DOUBLE_` double DEFAULT NULL,
+  `LONG_` bigint DEFAULT NULL,
+  `TEXT_` varchar(4000) DEFAULT NULL,
+  `TEXT2_` varchar(4000) DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_HI_DETAIL_PROC_INST` (`PROC_INST_ID_`),
+  KEY `ACT_IDX_HI_DETAIL_ACT_INST` (`ACT_INST_ID_`),
+  KEY `ACT_IDX_HI_DETAIL_TIME` (`TIME_`),
+  KEY `ACT_IDX_HI_DETAIL_NAME` (`NAME_`),
+  KEY `ACT_IDX_HI_DETAIL_TASK_ID` (`TASK_ID_`),
+  KEY `ACT_IDX_HI_DETAIL_BYTEARRAY` (`BYTEARRAY_ID_`),
+  CONSTRAINT `ACT_FK_DETAIL_BYTEARRAY` FOREIGN KEY (`BYTEARRAY_ID_`) REFERENCES `act_ge_bytearray` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='历史详情表';
+
+-- ----------------------------
+-- 历史身份链接表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_hi_identitylink`;
+CREATE TABLE `act_hi_identitylink` (
+  `ID_` varchar(64) NOT NULL,
+  `GROUP_ID_` varchar(255) DEFAULT NULL,
+  `TYPE_` varchar(255) DEFAULT NULL,
+  `USER_ID_` varchar(255) DEFAULT NULL,
+  `TASK_ID_` varchar(64) DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SUB_SCOPE_ID_` varchar(255) DEFAULT NULL,
+  `SCOPE_TYPE_` varchar(255) DEFAULT NULL,
+  `SCOPE_DEFINITION_ID_` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_HI_IDENT_LNK_USER` (`USER_ID_`),
+  KEY `ACT_IDX_HI_IDENT_LNK_GROUP` (`GROUP_ID_`),
+  KEY `ACT_IDX_HI_IDENT_LNK_SCOPE` (`SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_HI_IDENT_LNK_SUB_SCOPE` (`SUB_SCOPE_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_HI_IDENT_LNK_SCOPE_DEF` (`SCOPE_DEFINITION_ID_`,`SCOPE_TYPE_`),
+  KEY `ACT_IDX_HI_ATHRZ_PROCINST` (`PROC_INST_ID_`),
+  KEY `ACT_IDX_HI_TSKASS_TASK` (`TASK_ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='历史身份链接表';
+
+-- ----------------------------
+-- 历史评论表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_hi_comment`;
+CREATE TABLE `act_hi_comment` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `TYPE_` varchar(255) DEFAULT NULL,
+  `TIME_` datetime(3) NOT NULL,
+  `USER_ID_` varchar(255) DEFAULT NULL,
+  `TASK_ID_` varchar(64) DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `ACTION_` varchar(255) DEFAULT NULL,
+  `MESSAGE_` varchar(4000) DEFAULT NULL,
+  `FULL_MSG_` longblob,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_IDX_HI_COMMENT_TASK` (`TASK_ID_`),
+  KEY `ACT_IDX_HI_COMMENT_PROCINST` (`PROC_INST_ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='历史评论表';
+
+-- ----------------------------
+-- 历史附件表
+-- ----------------------------
+DROP TABLE IF EXISTS `act_hi_attachment`;
+CREATE TABLE `act_hi_attachment` (
+  `ID_` varchar(64) NOT NULL,
+  `REV_` int DEFAULT NULL,
+  `USER_ID_` varchar(255) DEFAULT NULL,
+  `NAME_` varchar(255) DEFAULT NULL,
+  `DESCRIPTION_` varchar(4000) DEFAULT NULL,
+  `TYPE_` varchar(255) DEFAULT NULL,
+  `TASK_ID_` varchar(64) DEFAULT NULL,
+  `PROC_INST_ID_` varchar(64) DEFAULT NULL,
+  `URL_` varchar(4000) DEFAULT NULL,
+  `CONTENT_ID_` varchar(64) DEFAULT NULL,
+  `TIME_` datetime(3) DEFAULT NULL,
+  PRIMARY KEY (`ID_`),
+  KEY `ACT_FK_ATTACHMENT_BYTEARRAY` (`CONTENT_ID_`),
+  CONSTRAINT `ACT_FK_ATTACHMENT_BYTEARRAY` FOREIGN KEY (`CONTENT_ID_`) REFERENCES `act_ge_bytearray` (`ID_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='历史附件表';
+
+-- ============================================================
+-- 5. 初始化属性数据
+-- ============================================================
+
+-- 插入Flowable引擎版本信息
+INSERT INTO `act_ge_property` (`NAME_`, `VALUE_`, `REV_`) VALUES ('schema.version', '7.2.0.0', 1);
+INSERT INTO `act_ge_property` (`NAME_`, `VALUE_`, `REV_`) VALUES ('schema.history', 'create(7.2.0.0)', 1);
+INSERT INTO `act_ge_property` (`NAME_`, `VALUE_`, `REV_`) VALUES ('next.dbid', '1', 1);
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ============================================================
+-- 说明
+-- ============================================================
+-- 此脚本为Flowable 7.2.0的MySQL数据库表初始化脚本
+-- 包含以下类型的表：
+-- 1. ACT_GE_*: 通用数据表
+-- 2. ACT_RE_*: 流程定义存储表
+-- 3. ACT_RU_*: 运行时流程实例表
+-- 4. ACT_HI_*: 历史流程实例表
+-- 
+-- 注意：
+-- - 此脚本适用于MySQL 5.7及以上版本
+-- - 编码使用utf8mb4
+-- - 外键检查已临时禁用，执行完成后重新启用
+-- - 如需要IDM（身份管理）模块，请单独执行相关脚本
