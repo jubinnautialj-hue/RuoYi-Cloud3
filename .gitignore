@@ -6,6 +6,8 @@
 !gradle/wrapper/gradle-wrapper.jar
 
 target/
+node_modules/
+.vite/
 !.mvn/wrapper/maven-wrapper.jar
 
 ######################################################################
