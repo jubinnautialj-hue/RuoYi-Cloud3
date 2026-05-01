@@ -11,6 +11,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 /**
  * Flowable引擎配置
  * 配置Flowable使用独立的数据源和事务管理器
+ * 注意：字体配置（activity-font-name等）通过application.yml属性配置
  * 
  * @author ruoyi
  */
@@ -29,8 +30,5 @@ public class FlowableEngineConfig implements EngineConfigurationConfigurer<Sprin
         configuration.setDataSource(flowableDataSource);
         configuration.setTransactionManager(flowableTransactionManager);
         configuration.setDatabaseSchemaUpdate("true");
-        configuration.setActivityFontName("宋体");
-        configuration.setLabelFontName("宋体");
-        configuration.setAnnotationFontName("宋体");
     }
 }
