@@ -1,0 +1,48 @@
+# Tomcat
+server:
+  port: 9205
+
+# Spring
+spring: 
+  application:
+    # 应用名称
+    name: ruoyi-flowable
+  profiles:
+    # 环境配置
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 127.0.0.1:8848
+      config:
+        # 配置中心地址
+        server-addr: 127.0.0.1:8848
+  config:
+    # 配置文件格式
+    file-extension: yml
+    import:
+      - nacos:application-${spring.profiles.active}.${spring.config.file-extension}
+      - nacos:${spring.application.name}-${spring.profiles.active}.${spring.config.file-extension}
+
+# Flowable 配置
+flowable:
+  # 禁用不需要的引擎
+  idm:
+    enabled: false
+  cmmn:
+    enabled: false
+  dmn:
+    enabled: false
+  form:
+    enabled: false
+  content:
+    enabled: false
+  app:
+    enabled: false
+  # 数据库策略：true=自动更新（首次启动时创建表结构），false=不更新（生产环境）
+  database-schema-update: true
+  # 字体配置，防止流程图中文乱码
+  activity-font-name: 宋体
+  label-font-name: 宋体
+  annotation-font-name: 宋体
