@@ -1,84 +1,202 @@
+-- =====================================================
+-- 若依微服务Flowable工作流数据库初始化脚本
+-- 数据库名称: ry-flowable
+-- Flowable版本: 7.2.0
+-- 创建日期: 2026-05-01
+-- =====================================================
+
 -- ------------------------------------------------------
--- 若依微服务Flowable工作流数据库
+-- 第一步：创建数据库（如果不存在）
+-- ------------------------------------------------------
+CREATE DATABASE IF NOT EXISTS `ry-flowable` 
+DEFAULT CHARACTER SET utf8mb4 
+COLLATE utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------
+-- 重要说明：
+-- 
+-- 1. 本脚本仅创建数据库，Flowable的表结构会在服务启动时自动创建
+-- 
+-- 2. Flowable 7.x 会自动创建以下类型的表（约38张表）：
+--    - ACT_GE_*  : 通用数据表
+--    - ACT_RE_*  : 流程定义存储表
+--    - ACT_RU_*  : 运行时流程实例表
+--    - ACT_HI_*  : 历史流程实例表
+--    - ACT_EVT_LOG : 事件日志表
+--    - FLW_*     : Flowable 7.x 新增表（基于Liquibase管理）
+-- 
+-- 3. 确保以下配置正确：
+--    a) 在Nacos配置中心创建 ruoyi-flowable-dev.yml
+--    b) 添加Flowable数据源配置
+--    c) 启动 ruoyi-flowable 服务
+-- 
+-- 4. 服务首次启动时，Flowable会自动执行以下操作：
+--    a) 检查数据库表结构
+--    b) 如果表不存在，自动创建所有必要的表
+--    c) 初始化必要的数据
+-- 
+-- 5. 表结构创建完成后，建议将 flowable.database-schema-update 改为 false
+--    以提高后续启动速度
 -- ------------------------------------------------------
 
-CREATE DATABASE IF NOT EXISTS `ry-flowable` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
+-- ------------------------------------------------------
+-- 使用数据库
+-- ------------------------------------------------------
 USE `ry-flowable`;
 
--- =====================================================
--- 注意：
--- 1. 本脚本仅包含数据库创建语句
--- 2. Flowable 7.x 的表结构会在服务首次启动时自动创建
--- 3. 请确保 bootstrap.yml 中 flowable.database-schema-update 设置为 true
--- 4. 表结构创建完成后，建议将该值改为 false 以提高启动速度
--- =====================================================
+-- ------------------------------------------------------
+-- 第二步：在Nacos配置中心添加以下配置（ruoyi-flowable-dev.yml）
+-- ------------------------------------------------------
+-- 请在Nacos配置中心创建配置文件 ruoyi-flowable-dev.yml，内容如下：
+-- 
+-- # Flowable独立数据源配置
+-- spring:
+--   datasource:
+--     druid:
+--       flowable:
+--         url: jdbc:mysql://localhost:3306/ry-flowable?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+--         username: root
+--         password: your_password
+--         driver-class-name: com.mysql.cj.jdbc.Driver
+--         # 连接池配置
+--         initial-size: 5
+--         min-idle: 10
+--         max-active: 20
+--         max-wait: 60000
+--         time-between-eviction-runs-millis: 60000
+--         min-evictable-idle-time-millis: 300000
+--         validation-query: SELECT 1
+--         test-while-idle: true
+--         test-on-borrow: false
+--         test-on-return: false
+--         pool-prepared-statements: true
+--         max-pool-prepared-statement-per-connection-size: 20
+-- 
+-- # Flowable配置
+-- flowable:
+--   # 数据库策略：true=启动时自动创建/更新表结构，false=不更新
+--   database-schema-update: true
+--   # 历史级别：none, activity, audit, full
+--   history-level: audit
+--   # 字体配置，防止流程图中文乱码
+--   activity-font-name: 宋体
+--   label-font-name: 宋体
+--   annotation-font-name: 宋体
+--   # 禁用不需要的引擎
+--   idm:
+--     enabled: false
+--   cmmn:
+--     enabled: false
+--   dmn:
+--     enabled: false
+--   form:
+--     enabled: false
+--   content:
+--     enabled: false
+--   app:
+--     enabled: false
+--   # 异步执行器配置
+--   async-executor-activate: true
+--   async-history-executor-activate: true
+-- 
 
 -- ------------------------------------------------------
--- Flowable 7.x 表结构说明（服务启动后自动创建）
+-- 第三步：启动服务后的验证步骤
+-- ------------------------------------------------------
+-- 服务启动成功后，执行以下SQL验证表结构：
+-- 
+-- -- 查看所有Flowable表
+-- SHOW TABLES LIKE 'ACT_%';
+-- SHOW TABLES LIKE 'FLW_%';
+-- 
+-- -- 检查表数量（应该有约38张表）
+-- SELECT COUNT(*) as table_count 
+-- FROM information_schema.tables 
+-- WHERE table_schema = 'ry-flowable' 
+-- AND (table_name LIKE 'ACT_%' OR table_name LIKE 'FLW_%');
+-- 
+-- -- 查看流程引擎版本
+-- SELECT * FROM ACT_GE_PROPERTY WHERE NAME_ = 'schema.version';
+-- 
+
+-- ------------------------------------------------------
+-- Flowable表结构说明（服务启动后自动创建）
 -- ------------------------------------------------------
 
 -- =====================================================
 -- 1. 通用数据表 (ACT_GE_*)
 -- =====================================================
--- ACT_GE_PROPERTY      系统相关属性表
--- ACT_GE_BYTEARRAY     通用的流程定义和流程资源表
+-- ACT_GE_PROPERTY      系统相关属性表（存储引擎版本等信息）
+-- ACT_GE_BYTEARRAY     通用的流程定义和流程资源表（存储BPMN文件、图片等）
 
 -- =====================================================
 -- 2. 流程定义存储表 (ACT_RE_*)
 -- =====================================================
--- ACT_RE_DEPLOYMENT    部署单元信息表
--- ACT_RE_PROCDEF       已部署的流程定义表
--- ACT_RE_MODEL         模型信息表
--- ACT_PROCDEF_INFO     流程定义信息表
+-- ACT_RE_DEPLOYMENT    部署单元信息表（每次部署流程定义生成一条记录）
+-- ACT_RE_PROCDEF       已部署的流程定义表（存储流程定义的元数据）
+-- ACT_RE_MODEL         模型信息表（存储流程设计器中的模型）
+-- ACT_PROCDEF_INFO     流程定义信息表（存储流程定义的额外信息）
 
 -- =====================================================
 -- 3. 运行时流程实例表 (ACT_RU_*)
 -- =====================================================
--- ACT_RU_EXECUTION         运行时流程执行实例表
--- ACT_RU_TASK              运行时任务表
--- ACT_RU_VARIABLE          运行时变量表
--- ACT_RU_IDENTITYLINK      运行时用户关系信息表
--- ACT_RU_JOB               运行时作业表
--- ACT_RU_TIMER_JOB         定时作业表
--- ACT_RU_SUSPENDED_JOB     暂停作业表
--- ACT_RU_DEADLETTER_JOB    死信作业表
--- ACT_RU_HISTORY_JOB       历史作业表
--- ACT_RU_EVENT_SUBSCR      运行时事件订阅表
+-- ACT_RU_EXECUTION         运行时流程执行实例表（存储流程实例和执行实例）
+-- ACT_RU_TASK              运行时任务表（存储用户任务）
+-- ACT_RU_VARIABLE          运行时变量表（存储流程变量）
+-- ACT_RU_IDENTITYLINK      运行时用户关系信息表（存储任务与用户/组的关系）
+-- ACT_RU_JOB               运行时作业表（存储异步作业）
+-- ACT_RU_TIMER_JOB         定时作业表（存储定时任务）
+-- ACT_RU_SUSPENDED_JOB     暂停作业表（存储已暂停的作业）
+-- ACT_RU_DEADLETTER_JOB    死信作业表（存储执行失败的作业）
+-- ACT_RU_HISTORY_JOB       历史作业表（存储历史异步作业）
+-- ACT_RU_EVENT_SUBSCR      运行时事件订阅表（存储事件订阅）
 
 -- =====================================================
 -- 4. 历史流程实例表 (ACT_HI_*)
 -- =====================================================
--- ACT_HI_PROCINST       历史的流程实例表
--- ACT_HI_ACTINST        历史的活动实例表
--- ACT_HI_TASKINST       历史的任务实例表
--- ACT_HI_VARINST        历史的流程运行中的变量信息表
--- ACT_HI_DETAIL         历史的流程运行中的细节信息表
--- ACT_HI_COMMENT        历史的说明性信息表
--- ACT_HI_ATTACHMENT     历史的流程附件表
+-- ACT_HI_PROCINST       历史的流程实例表（存储已完成的流程实例）
+-- ACT_HI_ACTINST        历史的活动实例表（存储已完成的活动实例）
+-- ACT_HI_TASKINST       历史的任务实例表（存储已完成的任务）
+-- ACT_HI_VARINST        历史的流程运行中的变量信息表（存储历史变量）
+-- ACT_HI_DETAIL         历史的流程运行中的细节信息表（存储变量变更历史）
+-- ACT_HI_COMMENT        历史的说明性信息表（存储评论和备注）
+-- ACT_HI_ATTACHMENT     历史的流程附件表（存储附件信息）
 -- ACT_HI_IDENTITYLINK   历史的流程运行过程中用户关系表
 
 -- =====================================================
 -- 5. 其他表
 -- =====================================================
--- ACT_EVT_LOG           事件日志表
--- FLW_* 系列表          Flowable 7.x 新增的基于Liquibase管理的表
+-- ACT_EVT_LOG           事件日志表（存储事件日志）
+-- FLW_* 系列表          Flowable 7.x 新增表（基于Liquibase管理的新表结构）
 
 -- ------------------------------------------------------
--- 配置提示
+-- 常见问题解答
 -- ------------------------------------------------------
--- 1. 在 Nacos 配置中心创建 ruoyi-flowable-dev.yml 配置文件
--- 2. 添加Flowable独立数据源配置：
---
--- spring:
---   datasource:
---     druid:
---       flowable:
---         url: jdbc:mysql://localhost:3306/ry-flowable?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
---         username: root
---         password: password
---         driver-class-name: com.mysql.cj.jdbc.Driver
---
--- 3. 首次启动服务时，Flowable会自动创建所有表结构
--- 4. 表结构创建完成后，可将 flowable.database-schema-update 改为 false
+-- 
+-- Q1: 服务启动后数据库没有创建表？
+-- A1: 请检查以下几点：
+--     - 数据库 ry-flowable 是否已创建
+--     - Nacos配置中的数据源URL、用户名、密码是否正确
+--     - flowable.database-schema-update 是否设置为 true
+--     - 查看服务启动日志，是否有Flowable相关的错误信息
+-- 
+-- Q2: 表创建成功后，如何提高启动速度？
+-- A2: 将 flowable.database-schema-update 改为 false
+--     注意：如果后续升级Flowable版本，需要重新设置为 true
+-- 
+-- Q3: 如何查看Flowable的日志？
+-- A3: 在 logback.xml 中添加以下配置：
+--     <logger name="org.flowable" level="debug" />
+-- 
+-- Q4: 流程图中文乱码怎么办？
+-- A4: 确保以下配置已设置：
+--     flowable:
+--       activity-font-name: 宋体
+--       label-font-name: 宋体
+--       annotation-font-name: 宋体
+-- 
+
+-- ------------------------------------------------------
+-- 完成！
+-- 请按照上述步骤配置Nacos并启动服务
 -- ------------------------------------------------------
