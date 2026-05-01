@@ -78,12 +78,7 @@ USE `ry-flowable`;
 --   database-schema-update: true
 --   # 历史级别：none, activity, audit, full
 --   history-level: audit
---   # 字体配置，防止流程图中文乱码
---   activity-font-name: 宋体
---   label-font-name: 宋体
---   annotation-font-name: 宋体
 --   # 禁用不需要的引擎
---   # 注意：app引擎需要保持启用（默认true），因为配置器依赖于它
 --   idm:
 --     enabled: false
 --   cmmn:
@@ -188,11 +183,10 @@ USE `ry-flowable`;
 --     <logger name="org.flowable" level="debug" />
 -- 
 -- Q4: 流程图中文乱码怎么办？
--- A4: 确保以下配置已设置：
---     flowable:
---       activity-font-name: 宋体
---       label-font-name: 宋体
---       annotation-font-name: 宋体
+-- A4: 确保 FlowableEngineConfig 中已配置字体：
+--     configuration.setActivityFontName("宋体");
+--     configuration.setLabelFontName("宋体");
+--     configuration.setAnnotationFontName("宋体");
 -- 
 
 -- ------------------------------------------------------

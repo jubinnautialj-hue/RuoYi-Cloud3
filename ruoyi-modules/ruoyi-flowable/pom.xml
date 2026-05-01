@@ -47,10 +47,10 @@
             <artifactId>mysql-connector-j</artifactId>
         </dependency>
 
-        <!-- RuoYi Common DataSource -->
+        <!-- Druid 数据库连接池 -->
         <dependency>
-            <groupId>com.ruoyi</groupId>
-            <artifactId>ruoyi-common-datasource</artifactId>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
         </dependency>
 
         <!-- RuoYi Common Log -->
@@ -65,10 +65,10 @@
             <artifactId>ruoyi-common-swagger</artifactId>
         </dependency>
 
-        <!-- Flowable 工作流引擎 -->
+        <!-- Flowable 工作流引擎（只包含流程引擎） -->
         <dependency>
             <groupId>org.flowable</groupId>
-            <artifactId>flowable-spring-boot-starter</artifactId>
+            <artifactId>flowable-spring-boot-starter-process</artifactId>
         </dependency>
 
     </dependencies>
