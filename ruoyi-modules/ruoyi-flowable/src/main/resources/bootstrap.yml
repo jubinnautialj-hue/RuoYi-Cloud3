@@ -28,6 +28,8 @@ spring:
 # Flowable 配置
 flowable:
   # 禁用不需要的引擎
+  # 注意：app引擎需要启用，因为我们使用了 flowable-spring-boot-starter
+  # 配置器 EngineConfigurationConfigurer<SpringAppEngineConfiguration> 依赖于 app 引擎
   idm:
     enabled: false
   cmmn:
@@ -38,11 +40,14 @@ flowable:
     enabled: false
   content:
     enabled: false
-  app:
-    enabled: false
   # 数据库策略：true=自动更新（首次启动时创建表结构），false=不更新（生产环境）
   database-schema-update: true
+  # 历史级别：none, activity, audit, full
+  history-level: audit
   # 字体配置，防止流程图中文乱码
   activity-font-name: 宋体
   label-font-name: 宋体
   annotation-font-name: 宋体
+  # 异步执行器配置
+  async-executor-activate: true
+  async-history-executor-activate: true

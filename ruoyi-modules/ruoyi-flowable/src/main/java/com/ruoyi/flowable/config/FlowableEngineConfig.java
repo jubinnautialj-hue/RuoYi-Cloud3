@@ -3,7 +3,7 @@ package com.ruoyi.flowable.config;
 import jakarta.annotation.Resource;
 import javax.sql.DataSource;
 
-import org.flowable.spring.SpringProcessEngineConfiguration;
+import org.flowable.app.spring.SpringAppEngineConfiguration;
 import org.flowable.spring.boot.EngineConfigurationConfigurer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -15,7 +15,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author ruoyi
  */
 @Configuration
-public class FlowableEngineConfig implements EngineConfigurationConfigurer<SpringProcessEngineConfiguration>
+public class FlowableEngineConfig implements EngineConfigurationConfigurer<SpringAppEngineConfiguration>
 {
     @Resource(name = "flowableDataSource")
     private DataSource flowableDataSource;
@@ -24,7 +24,7 @@ public class FlowableEngineConfig implements EngineConfigurationConfigurer<Sprin
     private PlatformTransactionManager flowableTransactionManager;
 
     @Override
-    public void configure(SpringProcessEngineConfiguration configuration)
+    public void configure(SpringAppEngineConfiguration configuration)
     {
         configuration.setDataSource(flowableDataSource);
         configuration.setTransactionManager(flowableTransactionManager);

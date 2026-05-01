@@ -83,6 +83,7 @@ USE `ry-flowable`;
 --   label-font-name: 宋体
 --   annotation-font-name: 宋体
 --   # 禁用不需要的引擎
+--   # 注意：app引擎需要保持启用（默认true），因为配置器依赖于它
 --   idm:
 --     enabled: false
 --   cmmn:
@@ -92,8 +93,6 @@ USE `ry-flowable`;
 --   form:
 --     enabled: false
 --   content:
---     enabled: false
---   app:
 --     enabled: false
 --   # 异步执行器配置
 --   async-executor-activate: true
